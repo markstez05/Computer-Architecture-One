@@ -11,6 +11,7 @@ class RAM {
      * Write (store) MDR value at address MAR
      */
     write(MAR, MDR) {
+        return this.grab(MAR, MDR, true);
         // !!! IMPLEMENT ME
         // write the value in the MDR to the address MAR
     }
@@ -21,8 +22,16 @@ class RAM {
      * @returns MDR
      */
     read(MAR) {
+        return this.grab(MAR, null, false)
         // !!! IMPLEMENT ME
         // Read the value in address MAR and return it
+    }
+    grab(MAR,MDR, write) {
+        if (write) {
+            this.mem[MAR] = MDR;
+        } else {
+            MDR = this.mem[MAR];
+        }
     }
 }
 
