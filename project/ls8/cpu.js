@@ -4,6 +4,16 @@
 const LDI = 0b10011001;
 const PRN = 0b01000011;
 const HLT = 0b00000001;
+const MUL = 0b10101010;
+const PUSH = 0b01001101;
+const POP = 0b01001100;
+const CALL = 0b01001000;
+const CMP = 0b10100000;
+
+const SP = 7;
+const FLAG_EQ = 0;
+const FLAG_GT = 1;
+const FLAG_LT = 2;
 /**
  * Class for simulating a simple Computer (CPU & memory)
  */
@@ -19,7 +29,17 @@ class CPU {
         
         // Special-purpose registers
         this.PC = 0; // Program Counter
+        this.FL = 0;
+        this.pcAdvance = true;
     }
+    flag(f,v) {
+        v = +v;
+        if (v) {
+            this.reg.FL |= (1 << f);
+        } else {
+            this.reg.FL &= ~(1 << f);
+        }
+    };
     
     /**
      * Store value in memory address, useful for program loading
@@ -56,10 +76,11 @@ class CPU {
      */
     alu(op, regA, regB) {
         switch (op) {
-            case 'MUL':
+            case "MUL":
+            this.reg[regA] = (this.reg[regB] * this.reg[regA]) & 0xff;
                 // !!! IMPLEMENT ME
-            this.ram.read(regA) * this.ram.read(regB);
-             return (this.reg[regA] = this.reg[regA] * this.reg[regB]);
+            // this.ram.read(regA) * this.ram.read(regB);
+            //  return (this.reg[regA] = this.reg[regA] * this.reg[regB]);
                 break;
         }
     }
@@ -76,7 +97,7 @@ class CPU {
         // !!! IMPLEMENT ME
 
         // Debugging output
-        // console.log(`${this.PC}: ${IR.toString(2)}`);
+        console.log(`${this.PC}: ${IR.toString(2)}`);
 
         // Get the two bytes in memory _after_ the PC in case the instruction
         // needs them.
@@ -86,34 +107,68 @@ class CPU {
 
         // Execute the instruction. Perform the actions for the instruction as
         // outlined in the LS-8 spec.
+        this.pcAdvance = true;
+
         switch(IR){
+
             case LDI:
             this.reg[IR2] = IR3;
-            this.PC += 3;
             break;
-            
+
             case PRN:
             console.log(this.reg[IR2]);
-            this.PC += 2;
             break;
 
             case HLT:
             this.stopClock();
-            this.PC += 1;
             break;
+
+            case MUL:
+                this.alu("MUL", IR2, IR3);
+                break;
+
+            case PUSH:
+                this.pushValue(this.reg[IR2]);
+            break;
+
+            case CMP: 
+           
+                this.flag(FLAG_EQ, IR2 === IR3);
+                this.flag(FLAG_GT, IR2 > IR3);
+                this.flag(FLAG_LT, IR2 < IR3);
+                break;
+
+            // case CALL:
+            // this.pushValue(this.PC + 2)
+            // break;
+
+            case POP:
+            this.reg[IR2] = this.ram.read(this.reg[SP]);
+            this.reg[SP]++;
+            break;
+
         default:
         // console.log("unknown instruction:" + IR.toString(2));
         this.stopClock();
         return;
         }
+
+      
         // !!! IMPLEMENT ME
 
         // Increment the PC register to go to the next instruction. Instructions
         // can be 1, 2, or 3 bytes long. Hint: the high 2 bits of the
         // instruction byte tells you how many bytes follow the instruction byte
         // for any particular instruction.
-        
+        if (this.pcAdvance) {
+        const instLen = (IR >> 6) +1;
+        this.PC += instLen;
+        }
         // !!! IMPLEMENT ME
+    }
+    pushValue(v) {
+        this.reg[SP]--;
+        this.ram.write(this.reg[SP], v);
     }
 }
 
