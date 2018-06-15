@@ -82,6 +82,10 @@ class CPU {
             // this.ram.read(regA) * this.ram.read(regB);
             //  return (this.reg[regA] = this.reg[regA] * this.reg[regB]);
                 break;
+            case 'CMP':
+            this.flag(FLAG_EQ, this.reg[regA] === this.reg[regB])
+            this.flag(FLAG_GT, this.reg[regA] > this.reg[regB])
+            this.flag(FLAG_LT, this.reg[regA] < this.reg[regB])
         }
     }
 
@@ -132,10 +136,7 @@ class CPU {
             break;
 
             case CMP: 
-           
-                this.flag(FLAG_EQ, IR2 === IR3);
-                this.flag(FLAG_GT, IR2 > IR3);
-                this.flag(FLAG_LT, IR2 < IR3);
+               this.alu('CMP', IR2, IR3)
                 break;
 
             // case CALL:
